@@ -1,0 +1,31 @@
+#!/bin/bash
+# This script is intended to run on an Atomic INSTALL label
+
+# Source EVM environment 
+[ -f /etc/default/evm ] &&  . /etc/default/evm
+
+# Check postgres server DB init status, if necessary, initdb, start/enable service and inject MIQ role
+
+echo "== Checking MIQ database status =="
+
+[[ -d /var/opt/rh/rh-postgresql95/lib/pgsql/data/base ]] && echo "** DB already initialized" && exit 0
+
+set -e
+
+echo "** DB has not been initialized"
+echo "** Launching initdb"
+su postgres -c "initdb -D ${APPLIANCE_PG_DATA}"
+echo "** Starting postgresql"
+su postgres -c "pg_ctl -D ${APPLIANCE_PG_DATA} start"
+sleep 5
+echo "** Creating MIQ role"
+su postgres -c "psql -c \"CREATE ROLE root SUPERUSER LOGIN PASSWORD 'smartvm'\""
+systemctl enable ${APPLIANCE_PG_SERVICE}
+echo "** Starting DB setup"
+export RAILS_USE_MEMORY_STORE="true"
+cd ${APP_ROOT}
+bin/rails db:create
+bin/rails db:migrate
+bin/rails db:seed
+echo "** MIQ database has been initialized"
+exit 0

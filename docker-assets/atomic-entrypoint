@@ -1,0 +1,10 @@
+#!/bin/bash
+
+[[ -s /etc/default/evm ]] && source /etc/default/evm
+
+set -e
+
+systemctl enable ${APPLIANCE_PG_SERVICE}
+
+# Call systemd
+exec init

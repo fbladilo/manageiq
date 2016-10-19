@@ -138,7 +138,8 @@ COPY docker-assets/appliance-initialize.service /usr/lib/systemd/system
 COPY docker-assets/appliance-initialize.sh /bin
 
 ## Scripts symlinks
-RUN ln -s /var/www/miq/vmdb/docker-assets/docker_initdb /usr/bin
+RUN ln -s /var/www/miq/vmdb/docker-assets/atomic-initdb /usr/bin
+RUN ln -s /var/www/miq/vmdb/docker-assets/atomic-entrypoint /usr/bin
 
 ## Enable services on systemd
 RUN systemctl enable memcached appliance-initialize evmserverd evminit evm-watchdog miqvmstat miqtop
@@ -159,7 +160,7 @@ LABEL name="manageiq" \
       description="ManageIQ is a management and automation platform for virtual, private, and hybrid cloud infrastructures." \
       INSTALL='docker run -ti --privileged \
                 --name ${NAME}_volume \
-                --entrypoint /usr/bin/docker_initdb \
+                --entrypoint /usr/bin/atomic-initdb \
                 $IMAGE' \
       RUN='docker run -di --privileged \
             --name ${NAME}_run \
@@ -167,6 +168,7 @@ LABEL name="manageiq" \
             --volumes-from ${NAME}_volume \
             -p 80:80 \
             -p 443:443 \
+            --entrypoint /usr/bin/atomic-entrypoint \
             $IMAGE' \
       STOP='docker stop ${NAME}_run && echo "Container ${NAME}_run has been stopped"' \
       UNINSTALL='docker rm -v ${NAME}_volume ${NAME}_run && echo "Uninstallation complete"'
